@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Hermes Agent</title>
+<title>System Config</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   :root {
@@ -15,11 +15,10 @@
     --text2: #8e8e93;
     --text3: #48484a;
     --accent: #0b93f6;
-    --accent2: #5e5ce6;
     --user-bg: #0b93f6;
     --bot-bg: #1c1c1e;
     --green: #34c759;
-    --radius: 16px;
+    --red: #ff453a;
   }
   html, body { height: 100%; overflow: hidden; }
   body {
@@ -28,25 +27,118 @@
     color: var(--text);
     -webkit-font-smoothing: antialiased;
   }
-  #app {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    max-width: 100%;
-    margin: 0 auto;
-  }
 
-  /* HEADER */
-  .header {
-    display: flex;
+  /* ── SLEEP SCREEN ── */
+  .screen {
+    display: none;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    height: 52px;
-    padding: 0 12px;
+    justify-content: center;
+    height: 100dvh;
+    padding: 24px;
+    text-align: center;
+  }
+  .screen.active { display: flex; }
+  .sleep-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+  }
+  .sleep-title {
+    font-size: 20px; font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .sleep-sub {
+    font-size: 13px; color: var(--text2);
+    margin-bottom: 28px;
+  }
+  .wake-btn {
+    padding: 14px 36px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: white;
+    font-size: 16px; font-weight: 500;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s;
+  }
+  .wake-btn:active { transform: scale(0.96); }
+
+  /* ── LOGIN SCREEN ── */
+  .login-box {
+    width: 100%; max-width: 320px;
+  }
+  .login-title {
+    font-size: 22px; font-weight: 700;
+    margin-bottom: 24px;
+  }
+  .login-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 17px;
+    font-family: inherit;
+    outline: none;
+    text-align: center;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .login-input:focus {
+    border-color: var(--accent);
+  }
+  .login-input::placeholder {
+    letter-spacing: 0;
+    color: var(--text3);
+    font-size: 14px;
+  }
+  .login-error {
+    color: var(--red);
+    font-size: 13px;
+    margin-bottom: 12px;
+    min-height: 20px;
+  }
+  .login-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: white;
+    font-size: 16px; font-weight: 500;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s;
+  }
+  .login-btn:active { transform: scale(0.96); }
+  .login-back {
+    margin-top: 16px;
+    background: none; border: none;
+    color: var(--text2); font-size: 13px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .login-back:active { color: var(--text); }
+
+  /* ── CHAT ── */
+  #chat { display: none; }
+  #chat.active { display: flex; flex-direction: column; height: 100dvh; }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 52px; padding: 0 12px;
+    padding-top: env(safe-area-inset-top, 0px);
     background: #1a1a1a;
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    padding-top: env(safe-area-inset-top, 0px);
   }
   .header-btn {
     width: 36px; height: 36px;
@@ -68,55 +160,12 @@
     font-size: 13px;
   }
 
-  /* SIDEBAR */
-  .sidebar-overlay {
-    position: fixed; inset: 0; z-index: 100;
-    display: none;
-  }
-  .sidebar-overlay.active { display: flex; }
-  .sidebar-backdrop {
-    flex: 1; background: rgba(0,0,0,0.6);
-  }
-  .sidebar {
-    width: 270px; background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    padding-top: env(safe-area-inset-top, 0px);
-    overflow-y: auto;
-  }
-  .sidebar-header {
-    display: flex; align-items: center; justify-content: space-between;
-    height: 52px; padding: 0 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px; font-weight: 600; color: var(--text2);
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .sidebar-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 16px; font-size: 15px; color: var(--text);
-    background: none; border: none; width: 100%; text-align: left;
-    cursor: pointer; -webkit-tap-highlight-color: transparent;
-  }
-  .sidebar-item:active { background: var(--surface2); }
-  .sidebar-item .icon { color: var(--text2); font-size: 18px; width: 24px; text-align: center; }
-  .sidebar-footer {
-    margin-top: auto; padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    font-size: 11px; color: var(--text3); line-height: 1.5;
-  }
-  .sidebar-footer .danger { color: #ff453a; background: none; border: none; cursor: pointer; font-size: 11px; padding: 0; }
-  .sidebar-footer .danger:active { color: #ff6b6b; }
-
-  /* MESSAGES */
   .messages {
     flex: 1; overflow-y: auto;
     padding: 8px 12px;
     scroll-behavior: smooth;
   }
-  .msg {
-    display: flex;
-    margin-bottom: 6px;
-  }
+  .msg { display: flex; margin-bottom: 6px; }
   .msg.user { justify-content: flex-end; }
   .msg.bot { justify-content: flex-start; }
   .msg-bubble {
@@ -127,25 +176,12 @@
     line-height: 1.45;
     word-wrap: break-word;
   }
-  .msg.user .msg-bubble {
-    background: var(--user-bg);
-    color: white;
-    border-bottom-right-radius: 5px;
-  }
-  .msg.bot .msg-bubble {
-    background: var(--bot-bg);
-    color: var(--text);
-    border-bottom-left-radius: 5px;
-  }
-  .msg-time {
-    font-size: 10px;
-    margin-top: 4px;
-    opacity: 0.5;
-  }
+  .msg.user .msg-bubble { background: var(--user-bg); color: white; border-bottom-right-radius: 5px; }
+  .msg.bot .msg-bubble { background: var(--bot-bg); color: var(--text); border-bottom-left-radius: 5px; }
+  .msg-time { font-size: 10px; margin-top: 4px; opacity: 0.5; }
   .msg.user .msg-time { color: rgba(255,255,255,0.6); text-align: right; }
   .msg.bot .msg-time { color: var(--text3); }
 
-  /* QUICK ACTIONS */
   .quick-actions {
     display: flex; gap: 6px; padding: 6px 12px;
     overflow-x: auto; flex-shrink: 0;
@@ -156,20 +192,15 @@
   .quick-btn {
     flex-shrink: 0;
     display: flex; align-items: center; gap: 5px;
-    padding: 7px 14px;
-    border-radius: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text2);
-    font-size: 12px;
-    cursor: pointer;
-    white-space: nowrap;
+    padding: 7px 14px; border-radius: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text2); font-size: 12px;
+    cursor: pointer; white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
     transition: all 0.15s;
   }
   .quick-btn:active { background: var(--surface2); color: var(--text); transform: scale(0.96); }
 
-  /* INPUT */
   .input-bar {
     display: flex; align-items: flex-end; gap: 8px;
     padding: 8px 12px;
@@ -179,28 +210,19 @@
     flex-shrink: 0;
   }
   .input-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: var(--surface2);
-    border-radius: 22px;
-    padding: 0 14px;
-    min-height: 40px;
+    flex: 1; display: flex; align-items: center;
+    background: var(--surface2); border-radius: 22px;
+    padding: 0 14px; min-height: 40px;
   }
   .input-wrap input {
-    flex: 1;
-    background: none; border: none; outline: none;
-    color: var(--text);
-    font-size: 15px;
-    line-height: 20px;
-    padding: 10px 0;
-    font-family: inherit;
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-size: 15px; line-height: 20px;
+    padding: 10px 0; font-family: inherit;
   }
   .input-wrap input::placeholder { color: var(--text3); }
   .send-btn {
     width: 40px; height: 40px; border-radius: 50%;
-    background: var(--accent);
-    border: none;
+    background: var(--accent); border: none;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
@@ -213,10 +235,32 @@
 </style>
 </head>
 <body>
-<div id="app">
-  <!-- Header -->
+
+<!-- ═══ SLEEP SCREEN ═══ -->
+<div class="screen active" id="sleepScreen">
+  <div class="sleep-icon">💤</div>
+  <div class="sleep-title">Hermes спит 😴</div>
+  <div class="sleep-sub">Скажи «проснись» в Telegram, чтобы разбудить</div>
+  <button class="wake-btn" id="wakeBtn">🔓 Разбудить</button>
+  <p style="margin-top:16px; font-size:11px; color:var(--text3);">Потребуется пароль</p>
+</div>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-title">🔐</div>
+    <input type="password" class="login-input" id="passInput" placeholder="Пароль" autocomplete="off">
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn">Войти</button>
+    <br>
+    <button class="login-back" id="loginBack">← Назад</button>
+  </div>
+</div>
+
+<!-- ═══ CHAT ═══ -->
+<div id="chat">
   <div class="header">
-    <button class="header-btn" id="menuBtn">☰</button>
+    <button class="header-btn" id="lockBtn">🔒</button>
     <div class="header-center">
       <div class="logo">⚡</div>
       <span>Hermes Agent</span>
@@ -224,14 +268,8 @@
     </div>
     <button class="header-btn" id="clearBtn">✕</button>
   </div>
-
-  <!-- Messages -->
   <div class="messages" id="messages"></div>
-
-  <!-- Quick Actions -->
   <div class="quick-actions" id="quickActions"></div>
-
-  <!-- Input -->
   <div class="input-bar">
     <div class="input-wrap">
       <input id="chatInput" type="text" placeholder="Сообщение..." autocomplete="off">
@@ -242,45 +280,88 @@
   </div>
 </div>
 
-<!-- Sidebar -->
-<div class="sidebar-overlay" id="sidebar">
-  <div class="sidebar" id="sidebarInner">
-    <div class="sidebar-header">
-      <span>Меню</span>
-      <button class="header-btn" id="closeSidebar">✕</button>
-    </div>
-    <button class="sidebar-item" data-action="tasks"><span class="icon">✅</span> Задачи</button>
-    <button class="sidebar-item" data-action="status"><span class="icon">📊</span> Статус проектов</button>
-    <button class="sidebar-item" data-action="strategy"><span class="icon">📋</span> Стратегия</button>
-    <button class="sidebar-item" data-action="veggies"><span class="icon">🥬</span> Овощная лавка</button>
-    <div class="sidebar-footer">
-      <div>deepseek-v4-flash · ollama-cloud</div>
-      <div>COO + CTO</div>
-      <button class="danger" id="clearFromSidebar">Очистить чат</button>
-    </div>
-  </div>
-  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-</div>
-
 <script>
-// ── Storage helpers ──
+const PASSWORD = 'admin123';
 const CHAT_KEY = 'hermes_chat';
-const TG_KEY = '__tasks';
+const STATE_KEY = 'hermes_state'; // 'sleep' | 'unlocked'
 
 let tg = null;
 try { if (window.Telegram?.WebApp) { tg = window.Telegram.WebApp; tg.ready(); tg.expand(); } } catch(e) {}
 
+// ── Render ──
+const sleepScreen = document.getElementById('sleepScreen');
+const loginScreen = document.getElementById('loginScreen');
+const chatEl = document.getElementById('chat');
+const passInput = document.getElementById('passInput');
+const loginError = document.getElementById('loginError');
+
+function showScreen(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  chatEl.classList.remove('active');
+  if (screen === 'sleep') sleepScreen.classList.add('active');
+  else if (screen === 'login') loginScreen.classList.add('active');
+  else if (screen === 'chat') chatEl.classList.add('active');
+}
+
+function goToSleep() {
+  localStorage.setItem(STATE_KEY, 'sleep');
+  showScreen('sleep');
+  // Auto-lock the bot too
+  if (tg) {
+    tg.sendData('/sleep');
+  }
+}
+
+function unlock() {
+  localStorage.setItem(STATE_KEY, 'unlocked');
+  showScreen('chat');
+  initChat();
+}
+
+// Check saved state
+(function initState() {
+  const state = localStorage.getItem(STATE_KEY);
+  if (state === 'unlocked') {
+    unlock();
+  } else {
+    showScreen('sleep');
+  }
+})();
+
+// ── Wake button ──
+document.getElementById('wakeBtn').addEventListener('click', () => {
+  showScreen('login');
+  passInput.value = '';
+  loginError.textContent = '';
+  setTimeout(() => passInput.focus(), 300);
+});
+
+// ── Login ──
+function doLogin() {
+  if (passInput.value === PASSWORD) {
+    unlock();
+  } else {
+    loginError.textContent = 'Неверный пароль';
+    passInput.value = '';
+    passInput.focus();
+  }
+}
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+passInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('loginBack').addEventListener('click', () => showScreen('sleep'));
+
+// ── Lock button in chat ──
+document.getElementById('lockBtn').addEventListener('click', goToSleep);
+
+// ── Chat logic ──
 function loadMessages() {
   try { const d = localStorage.getItem(CHAT_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; }
 }
-function saveMessages(msgs) {
-  localStorage.setItem(CHAT_KEY, JSON.stringify(msgs));
-}
-function now() {
-  return new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
-}
+function saveMessages(msgs) { localStorage.setItem(CHAT_KEY, JSON.stringify(msgs)); }
+function now() { return new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' }); }
 
-// ── Render ──
 const messagesEl = document.getElementById('messages');
 const inputEl = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
@@ -297,7 +378,7 @@ function renderMessages(msgs) {
   messagesEl.innerHTML = msgs.map(m => `
     <div class="msg ${m.role}">
       <div class="msg-bubble">
-        ${m.text}
+        ${m.text.replace(/\n/g, '<br>')}
         <div class="msg-time">${m.time}</div>
       </div>
     </div>
@@ -324,28 +405,35 @@ function sendToBot(text) {
     tg.close();
   } else {
     addMessage('user', text);
-    addMessage('assistant', '⬆️ Сообщение отправлено!\n\nОткрой Telegram, чтобы получить ответ. Чат работает внутри Telegram — настрой кнопку через @BotFather → /setmenubutton');
+    addMessage('assistant', '⬆️ Сообщение отправлено!\n\nОткрой Telegram.');
   }
 }
 
-// ── Init ──
-renderQuick();
+function initChat() {
+  renderQuick();
+  let msgs = loadMessages();
+  if (msgs.length === 0) {
+    msgs = [{ role: 'assistant', text: 'Привет, Дэн! 👋 Я проснулся. Чем займёмся?', time: now() }];
+    saveMessages(msgs);
+  }
+  renderMessages(msgs);
 
-let msgs = loadMessages();
-if (msgs.length === 0) {
-  msgs = [{ role: 'assistant', text: 'Привет, Дэн! 👋 Я Hermes — твой COO + CTO. Чем помогу?', time: now() }];
-  saveMessages(msgs);
-}
-renderMessages(msgs);
-
-// ── Events ──
-inputEl.addEventListener('input', () => {
-  sendBtn.disabled = !inputEl.value.trim();
-});
-
-inputEl.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
+  inputEl.addEventListener('input', () => {
+    sendBtn.disabled = !inputEl.value.trim();
+  });
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const text = inputEl.value.trim();
+      if (text) {
+        addMessage('user', text);
+        sendToBot(text);
+        inputEl.value = '';
+        sendBtn.disabled = true;
+      }
+    }
+  });
+  sendBtn.addEventListener('click', () => {
     const text = inputEl.value.trim();
     if (text) {
       addMessage('user', text);
@@ -353,69 +441,21 @@ inputEl.addEventListener('keydown', (e) => {
       inputEl.value = '';
       sendBtn.disabled = true;
     }
-  }
-});
-
-sendBtn.addEventListener('click', () => {
-  const text = inputEl.value.trim();
-  if (text) {
-    addMessage('user', text);
-    sendToBot(text);
-    inputEl.value = '';
-    sendBtn.disabled = true;
-  }
-});
-
-// Quick actions
-quickEl.addEventListener('click', (e) => {
-  const btn = e.target.closest('.quick-btn');
-  if (btn) {
-    const msg = btn.dataset.msg;
-    addMessage('user', msg);
-    sendToBot(msg);
-  }
-});
-
-// Sidebar
-document.getElementById('menuBtn').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.add('active');
-});
-document.getElementById('closeSidebar').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.remove('active');
-});
-document.getElementById('sidebarBackdrop').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.remove('active');
-});
-
-document.getElementById('sidebarInner').addEventListener('click', (e) => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  document.getElementById('sidebar').classList.remove('active');
-  const action = btn.dataset.action;
-  const msgs = {
-    tasks: 'покажи мои задачи',
-    status: 'статус всех бизнесов',
-    strategy: 'расскажи стратегию на месяц',
-    veggies: 'овощная лавка',
-  };
-  const msg = msgs[action];
-  if (msg) {
-    addMessage('user', msg);
-    sendToBot(msg);
-  }
-});
-
-// Clear chat
-function clearChat() {
-  const msgs = [{ role: 'assistant', text: 'Чат очищен. Чем займёмся? 🙌', time: now() }];
-  saveMessages(msgs);
-  renderMessages(msgs);
+  });
+  quickEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.quick-btn');
+    if (btn) {
+      const msg = btn.dataset.msg;
+      addMessage('user', msg);
+      sendToBot(msg);
+    }
+  });
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    const msgs = [{ role: 'assistant', text: 'Чат очищен. 🙌', time: now() }];
+    saveMessages(msgs);
+    renderMessages(msgs);
+  });
 }
-document.getElementById('clearBtn').addEventListener('click', clearChat);
-document.getElementById('clearFromSidebar').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.remove('active');
-  clearChat();
-});
 </script>
 </body>
 </html>
