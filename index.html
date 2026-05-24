@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Hermes Agent</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0a;
+    --surface: #1c1c1e;
+    --surface2: #2c2c2e;
+    --border: #2b2b2b;
+    --text: #e5e5ea;
+    --text2: #8e8e93;
+    --text3: #48484a;
+    --accent: #0b93f6;
+    --accent2: #5e5ce6;
+    --user-bg: #0b93f6;
+    --bot-bg: #1c1c1e;
+    --green: #34c759;
+    --radius: 16px;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    padding: 0 12px;
+    background: #1a1a1a;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .header-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none;
+    color: var(--text2); font-size: 20px; cursor: pointer;
+    border-radius: 10px; -webkit-tap-highlight-color: transparent;
+  }
+  .header-btn:active { background: var(--surface2); }
+  .header-center {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 600;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+  .logo {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: linear-gradient(135deg, #8b5cf6, #d946ef);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+
+  /* SIDEBAR */
+  .sidebar-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    display: none;
+  }
+  .sidebar-overlay.active { display: flex; }
+  .sidebar-backdrop {
+    flex: 1; background: rgba(0,0,0,0.6);
+  }
+  .sidebar {
+    width: 270px; background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
+    overflow-y: auto;
+  }
+  .sidebar-header {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 52px; padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; font-weight: 600; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; font-size: 15px; color: var(--text);
+    background: none; border: none; width: 100%; text-align: left;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .sidebar-item:active { background: var(--surface2); }
+  .sidebar-item .icon { color: var(--text2); font-size: 18px; width: 24px; text-align: center; }
+  .sidebar-footer {
+    margin-top: auto; padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text3); line-height: 1.5;
+  }
+  .sidebar-footer .danger { color: #ff453a; background: none; border: none; cursor: pointer; font-size: 11px; padding: 0; }
+  .sidebar-footer .danger:active { color: #ff6b6b; }
+
+  /* MESSAGES */
+  .messages {
+    flex: 1; overflow-y: auto;
+    padding: 8px 12px;
+    scroll-behavior: smooth;
+  }
+  .msg {
+    display: flex;
+    margin-bottom: 6px;
+  }
+  .msg.user { justify-content: flex-end; }
+  .msg.bot { justify-content: flex-start; }
+  .msg-bubble {
+    max-width: 82%;
+    padding: 8px 14px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.45;
+    word-wrap: break-word;
+  }
+  .msg.user .msg-bubble {
+    background: var(--user-bg);
+    color: white;
+    border-bottom-right-radius: 5px;
+  }
+  .msg.bot .msg-bubble {
+    background: var(--bot-bg);
+    color: var(--text);
+    border-bottom-left-radius: 5px;
+  }
+  .msg-time {
+    font-size: 10px;
+    margin-top: 4px;
+    opacity: 0.5;
+  }
+  .msg.user .msg-time { color: rgba(255,255,255,0.6); text-align: right; }
+  .msg.bot .msg-time { color: var(--text3); }
+
+  /* QUICK ACTIONS */
+  .quick-actions {
+    display: flex; gap: 6px; padding: 6px 12px;
+    overflow-x: auto; flex-shrink: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .quick-actions::-webkit-scrollbar { display: none; }
+  .quick-btn {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .quick-btn:active { background: var(--surface2); color: var(--text); transform: scale(0.96); }
+
+  /* INPUT */
+  .input-bar {
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 8px 12px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    background: #1a1a1a;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--surface2);
+    border-radius: 22px;
+    padding: 0 14px;
+    min-height: 40px;
+  }
+  .input-wrap input {
+    flex: 1;
+    background: none; border: none; outline: none;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 20px;
+    padding: 10px 0;
+    font-family: inherit;
+  }
+  .input-wrap input::placeholder { color: var(--text3); }
+  .send-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s;
+  }
+  .send-btn:active { transform: scale(0.9); }
+  .send-btn:disabled { background: var(--surface2); }
+  .send-btn svg { width: 18px; height: 18px; fill: white; }
+  .send-btn:disabled svg { fill: var(--text3); }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <button class="header-btn" id="menuBtn">☰</button>
+    <div class="header-center">
+      <div class="logo">⚡</div>
+      <span>Hermes Agent</span>
+      <div class="status-dot"></div>
+    </div>
+    <button class="header-btn" id="clearBtn">✕</button>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages"></div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions" id="quickActions"></div>
+
+  <!-- Input -->
+  <div class="input-bar">
+    <div class="input-wrap">
+      <input id="chatInput" type="text" placeholder="Сообщение..." autocomplete="off">
+    </div>
+    <button class="send-btn" id="sendBtn" disabled>
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebar">
+  <div class="sidebar" id="sidebarInner">
+    <div class="sidebar-header">
+      <span>Меню</span>
+      <button class="header-btn" id="closeSidebar">✕</button>
+    </div>
+    <button class="sidebar-item" data-action="tasks"><span class="icon">✅</span> Задачи</button>
+    <button class="sidebar-item" data-action="status"><span class="icon">📊</span> Статус проектов</button>
+    <button class="sidebar-item" data-action="strategy"><span class="icon">📋</span> Стратегия</button>
+    <button class="sidebar-item" data-action="veggies"><span class="icon">🥬</span> Овощная лавка</button>
+    <div class="sidebar-footer">
+      <div>deepseek-v4-flash · ollama-cloud</div>
+      <div>COO + CTO</div>
+      <button class="danger" id="clearFromSidebar">Очистить чат</button>
+    </div>
+  </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+</div>
+
+<script>
+// ── Storage helpers ──
+const CHAT_KEY = 'hermes_chat';
+const TG_KEY = '__tasks';
+
+let tg = null;
+try { if (window.Telegram?.WebApp) { tg = window.Telegram.WebApp; tg.ready(); tg.expand(); } } catch(e) {}
+
+function loadMessages() {
+  try { const d = localStorage.getItem(CHAT_KEY); return d ? JSON.parse(d) : []; } catch(e) { return []; }
+}
+function saveMessages(msgs) {
+  localStorage.setItem(CHAT_KEY, JSON.stringify(msgs));
+}
+function now() {
+  return new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ── Render ──
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const quickEl = document.getElementById('quickActions');
+
+const QUICK_ACTIONS = [
+  { label: 'Стратегия', icon: '📋', msg: 'расскажи стратегию на месяц' },
+  { label: 'Отчёт', icon: '📊', msg: 'покажи статус всех бизнесов' },
+  { label: 'Задачи', icon: '✅', msg: 'что я должен сделать сегодня?' },
+  { label: 'Овощи', icon: '🥬', msg: 'овощная лавка' },
+];
+
+function renderMessages(msgs) {
+  messagesEl.innerHTML = msgs.map(m => `
+    <div class="msg ${m.role}">
+      <div class="msg-bubble">
+        ${m.text}
+        <div class="msg-time">${m.time}</div>
+      </div>
+    </div>
+  `).join('');
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function renderQuick() {
+  quickEl.innerHTML = QUICK_ACTIONS.map(a => `
+    <button class="quick-btn" data-msg="${a.msg}">${a.icon} ${a.label}</button>
+  `).join('');
+}
+
+function addMessage(role, text) {
+  const msgs = loadMessages();
+  msgs.push({ role, text, time: now() });
+  saveMessages(msgs);
+  renderMessages(msgs);
+}
+
+function sendToBot(text) {
+  if (tg) {
+    tg.sendData(text);
+    tg.close();
+  } else {
+    addMessage('user', text);
+    addMessage('assistant', '⬆️ Сообщение отправлено!\n\nОткрой Telegram, чтобы получить ответ. Чат работает внутри Telegram — настрой кнопку через @BotFather → /setmenubutton');
+  }
+}
+
+// ── Init ──
+renderQuick();
+
+let msgs = loadMessages();
+if (msgs.length === 0) {
+  msgs = [{ role: 'assistant', text: 'Привет, Дэн! 👋 Я Hermes — твой COO + CTO. Чем помогу?', time: now() }];
+  saveMessages(msgs);
+}
+renderMessages(msgs);
+
+// ── Events ──
+inputEl.addEventListener('input', () => {
+  sendBtn.disabled = !inputEl.value.trim();
+});
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const text = inputEl.value.trim();
+    if (text) {
+      addMessage('user', text);
+      sendToBot(text);
+      inputEl.value = '';
+      sendBtn.disabled = true;
+    }
+  }
+});
+
+sendBtn.addEventListener('click', () => {
+  const text = inputEl.value.trim();
+  if (text) {
+    addMessage('user', text);
+    sendToBot(text);
+    inputEl.value = '';
+    sendBtn.disabled = true;
+  }
+});
+
+// Quick actions
+quickEl.addEventListener('click', (e) => {
+  const btn = e.target.closest('.quick-btn');
+  if (btn) {
+    const msg = btn.dataset.msg;
+    addMessage('user', msg);
+    sendToBot(msg);
+  }
+});
+
+// Sidebar
+document.getElementById('menuBtn').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.add('active');
+});
+document.getElementById('closeSidebar').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('active');
+});
+document.getElementById('sidebarBackdrop').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('active');
+});
+
+document.getElementById('sidebarInner').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  document.getElementById('sidebar').classList.remove('active');
+  const action = btn.dataset.action;
+  const msgs = {
+    tasks: 'покажи мои задачи',
+    status: 'статус всех бизнесов',
+    strategy: 'расскажи стратегию на месяц',
+    veggies: 'овощная лавка',
+  };
+  const msg = msgs[action];
+  if (msg) {
+    addMessage('user', msg);
+    sendToBot(msg);
+  }
+});
+
+// Clear chat
+function clearChat() {
+  const msgs = [{ role: 'assistant', text: 'Чат очищен. Чем займёмся? 🙌', time: now() }];
+  saveMessages(msgs);
+  renderMessages(msgs);
+}
+document.getElementById('clearBtn').addEventListener('click', clearChat);
+document.getElementById('clearFromSidebar').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.remove('active');
+  clearChat();
+});
+</script>
+</body>
+</html>
